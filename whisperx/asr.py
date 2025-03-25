@@ -1,4 +1,5 @@
 import os
+import logging
 from typing import List, Optional, Union
 from dataclasses import replace
 
@@ -15,6 +16,8 @@ from whisperx.audio import N_SAMPLES, SAMPLE_RATE, load_audio, log_mel_spectrogr
 from whisperx.types import SingleSegment, TranscriptionResult
 from whisperx.vads import Vad, Silero, Pyannote
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def find_numeral_symbol_tokens(tokenizer):
     numeral_symbol_tokens = []
@@ -285,7 +288,7 @@ class FasterWhisperPipeline(Pipeline):
 
     def detect_language(self, audio: np.ndarray) -> str:
         if audio.shape[0] < N_SAMPLES:
-            print("Warning: audio is shorter than 30s, language detection may be inaccurate.")
+            logger.debug("Warning: audio is shorter than 30s, language detection may be inaccurate.")
         model_n_mels = self.model.feat_kwargs.get("feature_size")
         segment = log_mel_spectrogram(audio[: N_SAMPLES],
                                       n_mels=model_n_mels if model_n_mels is not None else 80,
@@ -294,7 +297,7 @@ class FasterWhisperPipeline(Pipeline):
         results = self.model.model.detect_language(encoder_output)
         language_token, language_probability = results[0][0]
         language = language_token[2:-2]
-        print(f"Detected language: {language} ({language_probability:.2f}) in first 30s of audio...")
+        logger.debug(f"Detected language: {language} ({language_probability:.2f}) in first 30s of audio...")
         return language
 
 
